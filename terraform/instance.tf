@@ -75,7 +75,7 @@ resource "aws_instance" "minions_1a" {
 # Volume created manually for avoiding failing on destroying infra
 resource "aws_volume_attachment" "persistent_data_attachment" {
   device_name  = "/dev/sdh"
-  volume_id    = "vol-055b5a4786d6cc492"
+  volume_id    = "<EBS VOLUME ID>"
   instance_id  = "${aws_instance.minions_1a.id}"
   force_detach = true
 }
