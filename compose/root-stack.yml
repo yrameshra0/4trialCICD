@@ -1,0 +1,36 @@
+version: "3"
+services:
+    nginx:
+      image: yrameshrao/nginx:latest
+      depends_on:
+        - healthcheck
+        - jenkins
+      ports:
+        - "10000:80"
+      networks:
+        - root  
+
+    healthcheck:
+      image: yrameshrao/dockerhealthcheck:latest
+      networks:
+        - root 
+        
+    jenkins:
+      image: yrameshrao/jenkins:latest
+      deploy:
+        placement:
+          constraints: [node.role == manager]
+      networks:
+        - root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - /opt/persistent_data/jenkins_home:/var/jenkins_home
+      deploy:
+        replicas: 1
+        update_config:
+          parallelism: 1
+        restart_policy:
+          condition: on-failure
+
+networks:
+  root:

@@ -1,0 +1,149 @@
+---
+- 
+  name: Wait 300 seconds for port 22 to become open and contain "OpenSSH"
+  hosts: tag_Name_minions
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Waiting for ssh
+      wait_for:
+        port: 22
+        host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+        search_regex: OpenSSH
+        delay: 10
+      connection: local
+
+- 
+  name: Installing Docker CE
+  hosts: tag_Name_minions
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Install Ansible (update)
+      raw: apt-get -y update
+      register: output
+      changed_when: output.stdout != ""
+    - name: Install Ansible (install software-properties-common)
+      raw: apt-get -y install software-properties-common
+      register: output
+      changed_when: output.stdout != ""
+    - name: Install Ansible (add repository)
+      raw: apt-add-repository -y ppa:ansible/ansible
+      register: output
+      changed_when: output.stdout != ""  
+    - name: Install Ansible (update)
+      raw: apt-get -y update
+      register: output
+      changed_when: output.stdout != ""  
+    - name: Install Ansible (install)
+      raw: apt-get -y install ansible
+      register: output
+      changed_when: output.stdout != ""  
+    - name: Install docker - adding GPG key
+      raw: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+      register: output
+      changed_when: output.stdout != ""  
+    - name: Install docker - Adding Docker to APT sources
+      raw: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      register: output
+      changed_when: output.stdout != ""  
+    - name: Install docker - Updating package database with the Docker packages
+      raw: apt-get -y update
+      register: output
+      changed_when: output.stdout != ""
+    - name: Install docker - Installing from the Docker repo instead of the default Ubuntu 
+      raw: apt-cache policy docker-ce
+      register: output
+      changed_when: output.stdout != ""
+    - name: Install docker
+      raw: apt-get -y install docker-ce=5:18.09.0~3-0~ubuntu-bionic
+      register: output
+      changed_when: output.stdout != ""        
+    - name: Gathering Facts
+      setup:
+
+- 
+  name: Initialize Swarm Master
+  hosts: tag_Name_minions[0]
+  gather_facts: yes
+  become: true
+  tasks:
+    - 
+      command: "docker swarm init --advertise-addr {{inventory_hostname}}"
+    - 
+      command: "docker swarm join-token -q worker"
+      register: swarm_token
+    - 
+      set_fact: swarmtoken="{{swarm_token.stdout}}"
+    - 
+      debug:
+        msg: "System {{inventory_hostname}} has swarm token {{swarm_token.stdout}}"  
+
+- 
+  name: Join Swarm Nodes
+  hosts: tag_Name_minions[1:]
+  gather_facts: yes
+  become: true
+  tasks:
+    - 
+      debug:
+        msg: "Perivious step swarm token {{hostvars[groups['tag_Name_minions'][0]].swarmtoken}} and inventory hostname {{hostvars[groups['tag_Name_minions'][0]].inventory_hostname}}"
+    - 
+      command: "docker swarm join --advertise-addr {{inventory_hostname}} --token {{hostvars[groups['tag_Name_minions'][0]].swarmtoken}} {{hostvars[groups['tag_Name_minions'][0]].inventory_hostname}}:2377"
+
+- 
+  name: Mounting additional mount point for Jenkins data
+  hosts: tag_Name_minions[0]
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Making filesystem and mounting
+      shell: |
+          # mkfs -t ext4 /dev/xvdh
+          mkdir -p /opt/persistent_data && \
+          mount /dev/xvdh /opt/persistent_data && \
+          echo /dev/xvdh  /opt/persistent_data ext4  defaults,nofail 0 2 >> /etc/fstab
+
+- 
+  name: Copy docker compose file
+  hosts: tag_Name_minions[0]
+  gather_facts: yes
+  become: true
+  tasks:
+    -
+      file:
+        path: ~/compose
+        state: directory
+    -
+      copy:
+          src: ~/compose/root-stack.yml
+          dest: ~/compose/root-stack.yml      
+
+- 
+  name: Start root docker stack
+  hosts: tag_Name_minions[0]
+  gather_facts: yes
+  become: true
+  tasks:
+    -
+      args:
+        chdir: ~/compose
+      command: "docker stack deploy -c root-stack.yml root"
+
+- 
+  name: Getting Jenkins Logs
+  hosts: tag_Name_minions[0]
+  gather_facts: yes
+  become: true
+  tasks:
+    -
+      shell: "docker service logs -t root_jenkins 2>&1 |  grep -A 3 password"
+      register: root_jenkins_logs
+      until: root_jenkins_logs.stdout != ""
+      retries: 10
+      delay: 10
+      ignore_errors: true
+    - 
+      debug:
+        msg: "{{root_jenkins_logs.stdout_lines}}" 
+              

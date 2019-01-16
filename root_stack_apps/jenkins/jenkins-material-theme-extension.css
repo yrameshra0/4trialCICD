@@ -1,0 +1,205 @@
+@import url("https://s3.ap-south-1.amazonaws.com/cdn.4trial.net/jenkins-material-theme.css");
+
+body, table, form, input, td, th, p, textarea, select {
+  font-family: Roboto, sans-serif !important;
+}
+
+h1 {
+  margin: 5px 0;
+}
+
+/* Build console output */
+.console-output {
+  overflow: auto !important;
+}
+.console-output, .console-output pre, .console-output a, .console-output * {
+  white-space: pre !important;
+  font-size: 12px !important;
+  line-height: 1rem !important;
+}
+
+/* Header */
+#header {
+  height: 36px !important;
+  padding: 0px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+#header #jenkins-home-link {
+  height: 32px !important;
+}
+#header img#jenkins-head-icon {
+  height: 28px !important;
+  width: 32px !important;
+  padding-left: 32px !important;
+  background: url(/userContent/logo.png);
+  background-size: cover !important;
+}
+#header a#jenkins-home-link:after {
+  display: block;
+  content: "CI|CD Implementation";
+  color: white;
+  font-family: "Roboto Mono",monospace !important;
+  font-size: 16px;
+  margin-left: 40px;
+  line-height: 34px;
+}
+#header #jenkins-name-icon {
+  display: none;
+}
+#breadcrumbBar .top-sticker-inner {
+  box-shadow: 0 1px 1px 0 #ddd !important;
+} 
+
+/* Sidebar */
+#side-panel .task-icon-link[href='/'] {
+  left: 0 !important;
+  top: 0 !important;
+  padding: 0 12px !important;
+}
+
+/* Footer */
+span.page_generated, .jenkins_ver:after {
+  display: none;
+}
+
+/* View tabs */
+.tabBar .tab {
+  margin-left: 1px !important;
+}
+.tabBar .tab a {
+  padding: 5px !important;
+  border-top-left-radius: 2px !important;
+  border-top-right-radius: 2px !important;
+  font-size: 85% !important;
+}
+
+/* Dashboard */
+#main-panel .dashboard table.pane.bigtable tr[class*="job-status-"] img[src] {
+  padding-left: 32px !important;
+  padding-top: 32px !important;
+}
+
+/* Folder/Pipeline header */
+body[data-model-type$=".BuildPipelineView"] #main-panel,
+body[data-model-type$=".AllView"] #main-panel {
+  padding: 10px;
+  visibility: collapse;
+}
+body[data-model-type$=".BuildPipelineView"] #main-panel *,
+body[data-model-type$=".AllView"] #main-panel * {
+  visibility: visible;
+}
+body[data-model-type$=".BuildPipelineView"] #main-panel #description,
+body[data-model-type$=".AllView"] #main-panel #description,
+body[data-model-type$=".ListView"] #main-panel #description-link,
+body[data-model-type$=".BuildPipelineView"] #main-panel > h1:first-of-type,
+body[data-model-type$=".AllView"] #main-panel > h1:first-of-type {
+  display: none;
+}
+
+/* PIPELINE MATERIAL THEME */
+
+#build-pipeline-plugin-content {
+  background-color: transparent !important;
+  padding: 0 10px !important;
+}
+
+#build-pipeline-plugin-content div.pipeline-wrapper {
+  background-color: transparent !important;
+  border-bottom: 0;
+  padding: 0;
+}
+
+#build-pipeline-plugin-content table.pipelines > tbody > tr > td {
+  padding: 0 0 10px 0 !important;
+}
+
+#build-pipeline-plugin-content div.pipeline-wrapper div.pipeline {
+  padding: 0;
+}
+
+#build-pipeline-plugin-content .build-card,
+#build-pipeline-plugin-content .revision {
+  box-shadow: none !important;
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 8rem;
+  background-color: #FFFFFF;
+  border: 1px solid #EEEEEE;
+}
+
+#build-pipeline-plugin-content .build-card {
+  width: 12rem !important;
+  min-width: 12rem;
+  max-width: 12rem;
+  overflow: hidden;
+}
+
+#build-pipeline-plugin-content .build-card .build-info ul li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#build-pipeline-plugin-content .build-card .build-actions {
+  margin: 0 !important;
+  position: absolute;
+  left: 4px; right: 4px; bottom: 4px;
+}
+
+#build-pipeline-plugin-content .build-card .header,
+#build-pipeline-plugin-content .revision .title {
+  background: transparent !important;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+#build-pipeline-plugin-content .SUCCESS {
+  background-color: #99DF9C;
+}
+
+#build-pipeline-plugin-content .FAILURE,
+#build-pipeline-plugin-content .NOT_BUILT,
+#build-pipeline-plugin-content .ABORT {
+  background-color: #FF9E80;
+}
+
+#build-pipeline-plugin-content .UNSTABLE {
+  background-color: #FFE082;
+}
+
+#build-pipeline-plugin-content .BUILDING {
+  background-color: #80D8FF;
+}
+
+#build-pipeline-plugin-content .PENDING,
+#build-pipeline-plugin-content .MANUAL {
+  background-color: #EEEEEE;
+}
+
+#build-pipeline-plugin-content .PENDING {
+  background: repeating-linear-gradient(-45deg, #EEEEEE, #EEEEEE 10px, #FFFFFF 10px, #FFFFFF 20px);
+}
+
+/* BUILD MONITOR MATERIAL THEME */
+
+.build-monitor.dashboard #widgets > li {
+  margin: 0 0 4px 4px !important;
+  border-radius: 2px !important;
+  line-height: 1.2;
+  color: #E0E0E0;
+}
+.build-monitor .widget.basic.project .slots .slot {
+  opacity: 1;
+}
+.build-monitor .successful {
+  background-color: #2E7D32;
+}
+.build-monitor .failing {
+    background-color: #c62828;
+}
+.build-monitor .unstable {
+    background-color: #FF8F00;
+}
