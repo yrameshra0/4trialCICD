@@ -1,4 +1,4 @@
-FROM jenkins/jenkins:2.140
+FROM jenkins/jenkins:2.141
 
 USER root
 ADD prepare.sh /prepare.sh
