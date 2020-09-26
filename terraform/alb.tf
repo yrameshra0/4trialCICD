@@ -1,20 +1,20 @@
 resource "aws_alb" "applb" {
   name            = "applb"
   internal        = false
-  security_groups = ["${aws_security_group.public_limited_sg.id}"]
-  subnets         = ["${aws_subnet.public_sn_1.id}", "${aws_subnet.public_sn_2.id}"]
+  security_groups = [aws_security_group.public_limited_sg.id]
+  subnets         = [aws_subnet.public_sn_1.id, aws_subnet.public_sn_2.id]
 
-  tags {
+  tags = {
     Name = "Docker Swarm Application Load Balancer"
   }
 }
 
 resource "aws_alb_target_group" "alb_targets" {
-  count    = "${length(keys(var.services_map))}"
-  name     = "${element(values(var.services_map), count.index)}"
-  port     = "${element(keys(var.services_map), count.index)}"
+  count    = length(keys(var.services_map))
+  name     = element(values(var.services_map), count.index)
+  port     = element(keys(var.services_map), count.index)
   protocol = "HTTP"
-  vpc_id   = "${aws_vpc.cloud_den.id}"
+  vpc_id   = aws_vpc.cloud_den.id
 
   health_check {
     healthy_threshold   = 2
@@ -26,23 +26,23 @@ resource "aws_alb_target_group" "alb_targets" {
 
 resource "aws_alb_listener" "alb_listener" {
   count             = "1"
-  load_balancer_arn = "${aws_alb.applb.id}"
+  load_balancer_arn = aws_alb.applb.id
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    target_group_arn = "${element(aws_alb_target_group.alb_targets.*.arn, 0)}"
+    target_group_arn = element(aws_alb_target_group.alb_targets.*.arn, 0)
     type             = "forward"
   }
 }
 
 resource "aws_alb_listener_rule" "test_rule" {
-  listener_arn = "${aws_alb_listener.alb_listener.arn}"
+  listener_arn = aws_alb_listener.alb_listener[0].arn
   priority     = 100
 
   action {
     type             = "forward"
-    target_group_arn = "${aws_alb_target_group.alb_targets.2.arn}"
+    target_group_arn = aws_alb_target_group.alb_targets[2].arn
   }
 
   condition {
@@ -52,12 +52,12 @@ resource "aws_alb_listener_rule" "test_rule" {
 }
 
 resource "aws_alb_listener_rule" "prod_rule" {
-  listener_arn = "${aws_alb_listener.alb_listener.arn}"
+  listener_arn = aws_alb_listener.alb_listener[0].arn
   priority     = 200
 
   action {
     type             = "forward"
-    target_group_arn = "${aws_alb_target_group.alb_targets.1.arn}"
+    target_group_arn = aws_alb_target_group.alb_targets[1].arn
   }
 
   condition {
@@ -72,8 +72,8 @@ resource "aws_route53_record" "test_record" {
   type    = "A"
 
   alias {
-    name                   = "${aws_alb.applb.dns_name}"
-    zone_id                = "${aws_alb.applb.zone_id}"
+    name                   = aws_alb.applb.dns_name
+    zone_id                = aws_alb.applb.zone_id
     evaluate_target_health = false
   }
 }
@@ -84,8 +84,8 @@ resource "aws_route53_record" "prod_record" {
   type    = "A"
 
   alias {
-    name                   = "${aws_alb.applb.dns_name}"
-    zone_id                = "${aws_alb.applb.zone_id}"
+    name                   = aws_alb.applb.dns_name
+    zone_id                = aws_alb.applb.zone_id
     evaluate_target_health = false
   }
 }
@@ -96,8 +96,8 @@ resource "aws_route53_record" "cicd_record" {
   type    = "A"
 
   alias {
-    name                   = "${aws_alb.applb.dns_name}"
-    zone_id                = "${aws_alb.applb.zone_id}"
+    name                   = aws_alb.applb.dns_name
+    zone_id                = aws_alb.applb.zone_id
     evaluate_target_health = false
   }
 }
@@ -108,8 +108,9 @@ resource "aws_route53_record" "root_record" {
   type    = "A"
 
   alias {
-    name                   = "${aws_alb.applb.dns_name}"
-    zone_id                = "${aws_alb.applb.zone_id}"
+    name                   = aws_alb.applb.dns_name
+    zone_id                = aws_alb.applb.zone_id
     evaluate_target_health = false
   }
 }
+

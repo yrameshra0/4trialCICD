@@ -19,26 +19,6 @@
   gather_facts: False
   become: yes
   tasks:
-    - name: Install Ansible (update)
-      raw: apt-get -y update
-      register: output
-      changed_when: output.stdout != ""
-    - name: Install Ansible (install software-properties-common)
-      raw: apt-get -y install software-properties-common
-      register: output
-      changed_when: output.stdout != ""
-    - name: Install Ansible (add repository)
-      raw: apt-add-repository -y ppa:ansible/ansible
-      register: output
-      changed_when: output.stdout != ""  
-    - name: Install Ansible (update)
-      raw: apt-get -y update
-      register: output
-      changed_when: output.stdout != ""  
-    - name: Install Ansible (install)
-      raw: apt-get -y install ansible
-      register: output
-      changed_when: output.stdout != ""  
     - name: Install docker - adding GPG key
       raw: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
       register: output
@@ -51,10 +31,16 @@
       raw: apt-get -y update
       register: output
       changed_when: output.stdout != ""
+    - name: Wait for automatic system updates
+      become: yes
+      shell: while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done;
     - name: Install docker - Installing from the Docker repo instead of the default Ubuntu 
       raw: apt-cache policy docker-ce
       register: output
       changed_when: output.stdout != ""
+    - name: Wait for automatic system updates
+      become: yes
+      shell: while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 1; done;
     - name: Install docker
       raw: apt-get -y install docker-ce=5:18.09.0~3-0~ubuntu-bionic
       register: output
@@ -63,8 +49,49 @@
       setup:
 
 - 
+  name: Copying Files To Hosts
+  hosts: tag_Name_minions
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Copying mountpointfixer.sh
+      copy:
+        src: /home/ubuntu/ansible/mountpointfixer.sh
+        dest: /home/ubuntu/mountpointfixer.sh
+        follow: no
+    
+- 
+  name: Mounting additional mount point for Jenkins data on Master
+  hosts: tag_Role_cortana
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Making filesystem and mounting
+      shell: bash /home/ubuntu/mountpointfixer.sh
+
+- 
+  name: JENKINS FOLDER CREATION
+  hosts: tag_Role_cortana
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Create a directory if it does not exist
+      file:
+        path: /opt/persistent_data/jenkins_home
+        state: directory
+        mode: '0755'
+
+- 
+  name: Mounting additional mount point for other instances
+  hosts: tag_Role_masterChief
+  gather_facts: False
+  become: yes
+  tasks:
+    - name: Making filesystem and mounting
+      shell: bash /home/ubuntu/mountpointfixer.sh
+- 
   name: Initialize Swarm Master
-  hosts: tag_Name_minions[0]
+  hosts: tag_Role_cortana
   gather_facts: yes
   become: true
   tasks:
@@ -81,32 +108,19 @@
 
 - 
   name: Join Swarm Nodes
-  hosts: tag_Name_minions[1:]
+  hosts: tag_Role_masterChief
   gather_facts: yes
   become: true
   tasks:
     - 
       debug:
-        msg: "Perivious step swarm token {{hostvars[groups['tag_Name_minions'][0]].swarmtoken}} and inventory hostname {{hostvars[groups['tag_Name_minions'][0]].inventory_hostname}}"
+        msg: "Perivious step swarm token {{hostvars[groups['tag_Role_cortana'][0]].swarmtoken}} and inventory hostname {{hostvars[groups['tag_Role_cortana'][0]].inventory_hostname}}"
     - 
-      command: "docker swarm join --advertise-addr {{inventory_hostname}} --token {{hostvars[groups['tag_Name_minions'][0]].swarmtoken}} {{hostvars[groups['tag_Name_minions'][0]].inventory_hostname}}:2377"
-
-- 
-  name: Mounting additional mount point for Jenkins data
-  hosts: tag_Name_minions[0]
-  gather_facts: False
-  become: yes
-  tasks:
-    - name: Making filesystem and mounting
-      shell: |
-          # mkfs -t ext4 /dev/xvdh
-          mkdir -p /opt/persistent_data && \
-          mount /dev/xvdh /opt/persistent_data && \
-          echo /dev/xvdh  /opt/persistent_data ext4  defaults,nofail 0 2 >> /etc/fstab
+      command: "docker swarm join --advertise-addr {{inventory_hostname}} --token {{hostvars[groups['tag_Role_cortana'][0]].swarmtoken}} {{hostvars[groups['tag_Role_cortana'][0]].inventory_hostname}}:2377"
 
 - 
   name: Copy docker compose file
-  hosts: tag_Name_minions[0]
+  hosts: tag_Role_cortana
   gather_facts: yes
   become: true
   tasks:
@@ -121,7 +135,7 @@
 
 - 
   name: Start root docker stack
-  hosts: tag_Name_minions[0]
+  hosts: tag_Role_cortana
   gather_facts: yes
   become: true
   tasks:
@@ -132,7 +146,7 @@
 
 - 
   name: Getting Jenkins Logs
-  hosts: tag_Name_minions[0]
+  hosts: tag_Role_cortana
   gather_facts: yes
   become: true
   tasks:
